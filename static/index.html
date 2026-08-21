@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mono Risk Engine - Underwriter Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon-emerald': '0 0 15px rgba(16, 185, 129, 0.4)',
+                        'neon-amber': '0 0 15px rgba(245, 158, 11, 0.4)',
+                        'neon-rose': '0 0 15px rgba(244, 63, 94, 0.4)',
+                        'neon-blue': '0 0 15px rgba(59, 130, 246, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Modern Glassmorphic Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+        }
+        /* Custom Input Range Styling */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #334155;
+            height: 6px;
+            border-radius: 3px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -5px;
+            background-color: #3b82f6;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background-color: #60a5fa;
+        }
+        /* Micro-animations */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.9; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.98); }
+        }
+        .pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+        .transition-all-300 {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="h-full font-sans antialiased overflow-x-hidden selection:bg-blue-600 selection:text-white">
+    <!-- Background Gradient Grids -->
+    <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(30,58,138,0.3),rgba(255,255,255,0))]"></div>
+    
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="border-b border-slate-800/80 bg-slate-950/50 backdrop-blur-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <!-- Logo Mark -->
+                    <div class="h-9 w-9 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="text-lg font-bold tracking-tight text-white">MONO</span>
+                        <span class="text-xs font-semibold text-blue-400 bg-blue-950 px-2 py-0.5 rounded-full ml-2 border border-blue-900/50">RISK ENGINE</span>
+                    </div>
+                </div>
+                <!-- API Connection Badge -->
+                <div id="connection-status" class="flex items-center space-x-2 bg-emerald-950/30 border border-emerald-900/40 rounded-full px-3.5 py-1 text-xs text-emerald-400 font-medium transition-all duration-300">
+                    <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 absolute"></span>
+                    <span id="version-text">Connecting to models...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT COLUMN: INPUT CONTROLS & PERSONAS (5 Columns) -->
+            <section class="lg:col-span-5 flex flex-col space-y-6">
+                
+                <!-- Presets Persona Card -->
+                <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl"></div>
+                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 flex items-center">
+                        <svg class="h-4.5 w-4.5 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        Quick-Fill Presets
+                    </h2>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="fillPreset('low-risk')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 hover:bg-slate-900/50 hover:shadow-neon-emerald/10 transition-all duration-200 group text-center">
+                            <span class="text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-1">Prime</span>
+                            <span class="text-[10px] text-slate-500">Low Risk</span>
+                        </button>
+                        <button onclick="fillPreset('borderline')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-900/50 hover:shadow-neon-amber/10 transition-all duration-200 group text-center">
+                            <span class="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">Volatile</span>
+                            <span class="text-[10px] text-slate-500">Borderline</span>
+                        </button>
+                        <button onclick="fillPreset('high-risk')" class="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-rose-500/50 hover:bg-slate-900/50 hover:shadow-neon-rose/10 transition-all duration-200 group text-center">
+                            <span class="text-rose-400 text-xs font-semibold uppercase tracking-wider mb-1">Gambler</span>
+                            <span class="text-[10px] text-slate-500">High Risk</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Feature Inputs Form Card -->
+                <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl flex-grow">
+                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-5 flex items-center">
+                        <svg class="h-4.5 w-4.5 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                        Financial Feature Variables
+                    </h2>
+                    
+                    <form id="risk-form" onsubmit="evaluateRisk(event)" class="space-y-5">
+                        
+                        <!-- 1. Monthly Income -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="income" class="text-sm font-medium text-slate-300">Monthly Income</label>
+                                <span id="income-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">$5,000</span>
+                            </div>
+                            <input type="range" id="income" min="1000" max="25000" step="100" value="5000" class="w-full" oninput="updateDisplay(this, '$', '')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                                <span>$1,000</span>
+                                <span>$25,000</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. NSF Count -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="nsf_count" class="text-sm font-medium text-slate-300">NSF Count (Last 90 Days)</label>
+                                <span id="nsf_count-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">0</span>
+                            </div>
+                            <input type="range" id="nsf_count" min="0" max="20" step="1" value="0" class="w-full" oninput="updateDisplay(this, '', ' events')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                                <span>0</span>
+                                <span>20</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. Debt Service Ratio -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="dsr" class="text-sm font-medium text-slate-300">Debt Service Ratio (DSR)</label>
+                                <span id="dsr-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">0.30</span>
+                            </div>
+                            <input type="range" id="dsr" min="0.0" max="1.5" step="0.01" value="0.30" class="w-full" oninput="updateDisplay(this, '', '')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                                <span>0.00</span>
+                                <span>1.50</span>
+                            </div>
+                        </div>
+
+                        <!-- 4. Balance Volatility -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="balance_volatility" class="text-sm font-medium text-slate-300">Daily Balance Volatility</label>
+                                <span id="balance_volatility-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">$500</span>
+                            </div>
+                            <input type="range" id="balance_volatility" min="0" max="10000" step="50" value="500" class="w-full" oninput="updateDisplay(this, '$', '')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                                <span>$0</span>
+                                <span>$10,000</span>
+                            </div>
+                        </div>
+
+                        <!-- 5. Loan Inflow Ratio -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="loan_inflow_ratio" class="text-sm font-medium text-slate-300">Loan Inflow Ratio</label>
+                                <span id="loan_inflow_ratio-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">0.20</span>
+                            </div>
+                            <input type="range" id="loan_inflow_ratio" min="0.0" max="5.0" step="0.1" value="0.2" class="w-full" oninput="updateDisplay(this, '', 'x')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                                <span>0.0</span>
+                                <span>5.0</span>
+                            </div>
+                        </div>
+
+                        <!-- 6. Gambling Spend Index -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="gambling_spend_index" class="text-sm font-medium text-slate-300">Gambling Spend Index</label>
+                                <span id="gambling_spend_index-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">0%</span>
+                            </div>
+                            <input type="range" id="gambling_spend_index" min="0.0" max="1.0" step="0.01" value="0.0" class="w-full" oninput="updateDisplayPercent(this)">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                                <span>0%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+
+                        <!-- 7. Narration Risk Score -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="narration_risk_score" class="text-sm font-medium text-slate-300">Statement Narration Risk</label>
+                                <span id="narration_risk_score-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">0.10</span>
+                            </div>
+                            <input type="range" id="narration_risk_score" min="0.0" max="1.0" step="0.01" value="0.1" class="w-full" oninput="updateDisplay(this, '', '')">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
+                                <span>0.00 (Safe)</span>
+                                <span>1.00 (Risk)</span>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" id="btn-submit" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/30 hover:shadow-indigo-500/40 transform hover:-translate-y-0.5 transition-all duration-150 flex items-center justify-center space-x-2 text-base">
+                            <span>Evaluate Risk Decision</span>
+                            <svg id="submit-spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: RESULTS & SHAP ATTRIBUTIONS (7 Columns) -->
+            <section class="lg:col-span-7 flex flex-col space-y-6">
+                
+                <!-- Decision Output Grid -->
+                <div id="result-wrapper" class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-8 shadow-xl relative overflow-hidden transition-all-300 min-h-[300px] flex flex-col justify-between">
+                    
+                    <!-- Background Glow Pattern -->
+                    <div id="glow-indicator" class="absolute -top-24 -right-24 w-60 h-60 bg-blue-600/10 rounded-full blur-3xl transition-all duration-700"></div>
+
+                    <!-- Placeholder State (Before Execution) -->
+                    <div id="placeholder-state" class="flex-grow flex flex-col items-center justify-center py-12 text-center">
+                        <div class="h-16 w-16 bg-slate-800/40 rounded-full flex items-center justify-center border border-slate-700/50 mb-4 pulse-slow">
+                            <svg class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-200">Awaiting Evaluation</h3>
+                        <p class="text-sm text-slate-500 max-w-sm mt-1">Adjust credit decision variables and click "Evaluate Risk" or select a preset persona to test decisioning outcomes.</p>
+                    </div>
+
+                    <!-- Main Scoring Dashboard Output (Hidden by Default) -->
+                    <div id="dashboard-state" class="hidden flex-grow flex flex-col justify-between space-y-6">
+                        
+                        <!-- Header: Risk Status -->
+                        <div class="flex items-center justify-between border-b border-slate-800/80 pb-5">
+                            <div>
+                                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider">LGBM Assessment Decision</h3>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <span id="result-risk-tier" class="text-2xl font-black tracking-tight text-white">-</span>
+                                    <span id="fallback-badge" class="hidden px-2.5 py-0.5 bg-yellow-950/80 text-yellow-400 border border-yellow-800/60 text-[10px] font-bold rounded-full tracking-wider uppercase animate-pulse">FALLBACK</span>
+                                </div>
+                            </div>
+                            <!-- Small Circle Score Gauge -->
+                            <div class="relative flex items-center justify-center">
+                                <svg class="w-16 h-16 transform -rotate-90">
+                                    <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4" class="text-slate-800" fill="transparent" />
+                                    <circle id="gauge-circle" cx="32" cy="32" r="28" stroke="currentColor" stroke-width="4" class="text-blue-500 transition-all duration-1000" stroke-dasharray="175.9" stroke-dashoffset="175.9" fill="transparent" />
+                                </svg>
+                                <span id="result-prob-small" class="absolute text-sm font-bold text-slate-100">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Core Stats Grid -->
+                        <div class="grid grid-cols-2 gap-6 my-2">
+                            <!-- Default Prob Card -->
+                            <div class="bg-slate-950/50 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                                <span class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Default Probability</span>
+                                <div>
+                                    <span id="result-prob-large" class="text-3xl font-extrabold tracking-tight text-white">-</span>
+                                    <span class="text-slate-500 text-xs font-medium ml-1">default</span>
+                                </div>
+                            </div>
+                            <!-- Max Loan Card -->
+                            <div class="bg-slate-950/50 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                                <span class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Max Limit Affordable</span>
+                                <div>
+                                    <span id="result-limit" class="text-3xl font-extrabold tracking-tight text-white">-</span>
+                                    <span class="text-slate-500 text-xs font-medium ml-1">USD</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Log Trace Code -->
+                        <div id="system-trace-wrapper" class="bg-slate-950/80 border border-slate-800/80 rounded-lg p-2.5 flex items-center justify-between text-[11px] font-mono text-slate-500">
+                            <span>System Code:</span>
+                            <span id="result-reason-code" class="text-slate-400 font-semibold uppercase tracking-wider">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SHAP Reason Codes Card -->
+                <div class="bg-slate-900/60 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl relative">
+                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-5 flex items-center justify-between">
+                        <span class="flex items-center">
+                            <svg class="h-4.5 w-4.5 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            SHAP Feature Attributions
+                        </span>
+                        <span class="text-[10px] text-slate-500 font-normal normal-case">Top 3 Explainers</span>
+                    </h2>
+
+                    <!-- SHAP Empty/Loading State -->
+                    <div id="shap-placeholder" class="py-6 text-center text-slate-500 text-sm">
+                        SHAP reason attributions will render once calculation is complete.
+                    </div>
+
+                    <!-- SHAP Bar Charts List (Hidden) -->
+                    <div id="shap-bars" class="hidden space-y-4">
+                        <!-- Chart item template will inject here -->
+                    </div>
+
+                    <!-- Explanatory note -->
+                    <p class="text-[10px] text-slate-500 leading-normal mt-5">
+                        * Positive values (<span class="text-rose-400 font-medium">red</span>) represent variables that increase the default risk probability. Negative values (<span class="text-emerald-400 font-medium">green</span>) represent variables that pull the score down, reducing risk.
+                    </p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-slate-900 py-6 text-center text-xs text-slate-600 bg-slate-950/80">
+            <div class="max-w-7xl mx-auto px-4">
+                &copy; 2026 Mono Decision Engine Demo. Active model version: <span id="footer-version" class="font-medium text-slate-500">1.0.0</span>. Built for technical demonstration.
+            </div>
+        </footer>
+    </div>
+
+    <!-- Javascript Handlers -->
+    <script>
+        // Preset configurations mapping
+        const PRESETS = {
+            'low-risk': {
+                income: 16000,
+                nsf_count: 0,
+                dsr: 0.12,
+                balance_volatility: 250,
+                loan_inflow_ratio: 0.1,
+                gambling_spend_index: 0.0,
+                narration_risk_score: 0.05
+            },
+            'borderline': {
+                income: 5800,
+                nsf_count: 1,
+                dsr: 0.38,
+                balance_volatility: 1400,
+                loan_inflow_ratio: 0.7,
+                gambling_spend_index: 0.15,
+                narration_risk_score: 0.32
+            },
+            'high-risk': {
+                income: 2900,
+                nsf_count: 6,
+                dsr: 0.72,
+                balance_volatility: 5200,
+                loan_inflow_ratio: 2.8,
+                gambling_spend_index: 0.68,
+                narration_risk_score: 0.85
+            }
+        };
+
+        const FEATURE_LABELS = {
+            'income': 'Monthly Income',
+            'nsf_count': 'NSF Count',
+            'dsr': 'Debt Service Ratio',
+            'balance_volatility': 'Balance Volatility',
+            'loan_inflow_ratio': 'Loan Inflow Ratio',
+            'gambling_spend_index': 'Gambling Spend Index',
+            'narration_risk_score': 'Narration Risk Score'
+        };
+
+        // On document load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Setup slider labels defaults
+            syncAllSlidersDisplay();
+            // Test connection to health endpoint
+            checkApiHealth();
+        });
+
+        // Query FastAPI /health
+        async function checkApiHealth() {
+            const badge = document.getElementById('connection-status');
+            const versionText = document.getElementById('version-text');
+            const footerVersion = document.getElementById('footer-version');
+            try {
+                const res = await fetch('/health');
+                if (res.ok) {
+                    const data = await res.json();
+                    versionText.textContent = `Model v${data.model_version} (Active)`;
+                    footerVersion.textContent = data.model_version;
+                    badge.className = "flex items-center space-x-2 bg-emerald-950/30 border border-emerald-900/40 rounded-full px-3.5 py-1 text-xs text-emerald-400 font-medium transition-all duration-300";
+                } else {
+                    throw new Error("HTTP Not OK");
+                }
+            } catch (e) {
+                console.error("Health check failed:", e);
+                versionText.textContent = "Offline / Connection Failed";
+                badge.className = "flex items-center space-x-2 bg-rose-950/30 border border-rose-900/40 rounded-full px-3.5 py-1 text-xs text-rose-400 font-medium transition-all duration-300";
+            }
+        }
+
+        // Sync helper for slider label styling
+        function updateDisplay(el, prefix, suffix) {
+            const displayEl = document.getElementById(`${el.id}-val`);
+            if (displayEl) {
+                let val = parseFloat(el.value);
+                if (prefix === '$') {
+                    displayEl.textContent = prefix + val.toLocaleString(undefined, { maximumFractionDigits: 2 });
+                } else {
+                    displayEl.textContent = prefix + val + suffix;
+                }
+            }
+        }
+
+        function updateDisplayPercent(el) {
+            const displayEl = document.getElementById(`${el.id}-val`);
+            if (displayEl) {
+                let val = Math.round(parseFloat(el.value) * 100);
+                displayEl.textContent = `${val}%`;
+            }
+        }
+
+        function syncAllSlidersDisplay() {
+            document.querySelectorAll('input[type="range"]').forEach(input => {
+                if (input.id === 'income' || input.id === 'balance_volatility') {
+                    updateDisplay(input, '$', '');
+                } else if (input.id === 'gambling_spend_index') {
+                    updateDisplayPercent(input);
+                } else if (input.id === 'nsf_count') {
+                    updateDisplay(input, '', ' events');
+                } else if (input.id === 'loan_inflow_ratio') {
+                    updateDisplay(input, '', 'x');
+                } else {
+                    updateDisplay(input, '', '');
+                }
+            });
+        }
+
+        // Prepopulate persona inputs and auto-submit
+        function fillPreset(presetKey) {
+            const values = PRESETS[presetKey];
+            if (!values) return;
+
+            Object.entries(values).forEach(([id, val]) => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.value = val;
+                }
+            });
+
+            syncAllSlidersDisplay();
+            
+            // Add subtle ripple animation on presets
+            const formCard = document.getElementById('risk-form').parentElement;
+            formCard.classList.add('ring-2', 'ring-blue-500/30', 'scale-[0.99]');
+            setTimeout(() => {
+                formCard.classList.remove('ring-2', 'ring-blue-500/30', 'scale-[0.99]');
+            }, 250);
+
+            // Auto-trigger evaluation
+            document.getElementById('btn-submit').click();
+        }
+
+        // Evaluate Risk AJAX handler
+        async function evaluateRisk(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById('btn-submit');
+            const submitSpinner = document.getElementById('submit-spinner');
+            const placeholderState = document.getElementById('placeholder-state');
+            const dashboardState = document.getElementById('dashboard-state');
+            const resultWrapper = document.getElementById('result-wrapper');
+            const glowIndicator = document.getElementById('glow-indicator');
+            const fallbackBadge = document.getElementById('fallback-badge');
+            
+            // Lock submit button
+            submitBtn.disabled = true;
+            submitSpinner.classList.remove('hidden');
+
+            // Gather inputs
+            const payload = {
+                income: parseFloat(document.getElementById('income').value),
+                nsf_count: parseInt(document.getElementById('nsf_count').value),
+                dsr: parseFloat(document.getElementById('dsr').value),
+                balance_volatility: parseFloat(document.getElementById('balance_volatility').value),
+                loan_inflow_ratio: parseFloat(document.getElementById('loan_inflow_ratio').value),
+                gambling_spend_index: parseFloat(document.getElementById('gambling_spend_index').value),
+                narration_risk_score: parseFloat(document.getElementById('narration_risk_score').value)
+            };
+
+            try {
+                const response = await fetch('/score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error("Score API returned failure code.");
+                }
+
+                const data = await response.json();
+                
+                // Hide placeholder, display dashboard
+                placeholderState.classList.add('hidden');
+                dashboardState.classList.remove('hidden');
+
+                // Bind outputs
+                const riskTier = data.risk_tier || data.risk_band;
+                document.getElementById('result-risk-tier').textContent = riskTier;
+                
+                const rawProb = data.probability;
+                const formattedProb = (rawProb * 100).toFixed(1) + '%';
+                document.getElementById('result-prob-large').textContent = formattedProb;
+                document.getElementById('result-prob-small').textContent = Math.round(rawProb * 100) + '%';
+                
+                const maxLoan = data.max_loan_affordable;
+                document.getElementById('result-limit').textContent = maxLoan > 0 
+                    ? '$' + maxLoan.toLocaleString() 
+                    : '$0';
+                    
+                document.getElementById('result-reason-code').textContent = data.reason_code || 'N/A';
+
+                // Display/Hide Fallback badge
+                if (data.fallback) {
+                    fallbackBadge.classList.remove('hidden');
+                } else {
+                    fallbackBadge.classList.add('hidden');
+                }
+
+                // Update theme border glow and background indicator depending on risk tier
+                // Standard Tiers: Low, Medium, High. Or Medium-Manual-Review.
+                resultWrapper.className = "bg-slate-900/80 backdrop-blur-md rounded-2xl p-8 shadow-xl relative overflow-hidden transition-all-300 min-h-[300px] flex flex-col justify-between border";
+                
+                if (riskTier.toLowerCase() === 'low') {
+                    resultWrapper.classList.add('border-emerald-500/40', 'shadow-neon-emerald/20');
+                    glowIndicator.className = "absolute -top-24 -right-24 w-60 h-60 bg-emerald-500/20 rounded-full blur-3xl transition-all duration-700";
+                    animateGauge(rawProb, '#10b981'); // Emerald
+                } else if (riskTier.toLowerCase() === 'medium') {
+                    resultWrapper.classList.add('border-amber-500/40', 'shadow-neon-amber/20');
+                    glowIndicator.className = "absolute -top-24 -right-24 w-60 h-60 bg-amber-500/20 rounded-full blur-3xl transition-all duration-700";
+                    animateGauge(rawProb, '#f59e0b'); // Amber
+                } else if (riskTier.toLowerCase() === 'high') {
+                    resultWrapper.classList.add('border-rose-500/40', 'shadow-neon-rose/20');
+                    glowIndicator.className = "absolute -top-24 -right-24 w-60 h-60 bg-rose-500/20 rounded-full blur-3xl transition-all duration-700";
+                    animateGauge(rawProb, '#f43f5e'); // Rose
+                } else {
+                    // Fallback or review bands
+                    resultWrapper.classList.add('border-yellow-500/40', 'shadow-neon-amber/20');
+                    glowIndicator.className = "absolute -top-24 -right-24 w-60 h-60 bg-yellow-500/20 rounded-full blur-3xl transition-all duration-700";
+                    animateGauge(rawProb, '#eab308'); // Yellow
+                }
+
+                // Render SHAP attribution reason code progress bars
+                renderShapBars(data.top_features);
+
+            } catch (e) {
+                console.error("Risk scoring evaluation error:", e);
+                alert("Decision Engine Connection Error. Using dashboard UI offline representation.");
+            } finally {
+                // Unlock submit button
+                submitBtn.disabled = false;
+                submitSpinner.classList.add('hidden');
+            }
+        }
+
+        // Circular Gauge Dashboard Animation
+        function animateGauge(prob, colorHex) {
+            const circle = document.getElementById('gauge-circle');
+            const circumference = 2 * Math.PI * 28; // ~175.92
+            
+            // Limit probability clamp between 0.0 and 1.0
+            const clampedProb = Math.min(Math.max(prob, 0.0), 1.0);
+            const strokeOffset = circumference * (1.0 - clampedProb);
+            
+            circle.style.stroke = colorHex;
+            circle.style.strokeDashoffset = strokeOffset;
+        }
+
+        // Render SHAP horizontal bars dynamically
+        function renderShapBars(featuresList) {
+            const shapPlaceholder = document.getElementById('shap-placeholder');
+            const shapBarsContainer = document.getElementById('shap-bars');
+            
+            shapPlaceholder.classList.add('hidden');
+            shapBarsContainer.classList.remove('hidden');
+            shapBarsContainer.innerHTML = ''; // Reset container
+
+            if (!featuresList || featuresList.length === 0) {
+                shapBarsContainer.innerHTML = '<div class="text-xs text-slate-500 py-2">No SHAP explainers available for this decision</div>';
+                return;
+            }
+
+            // Find absolute maximum SHAP value in the list for scaling width percent
+            const maxVal = Math.max(...featuresList.map(item => Math.abs(item.shap_value)), 0.0001);
+
+            featuresList.forEach(item => {
+                const rawVal = item.shap_value;
+                const label = FEATURE_LABELS[item.feature] || item.feature;
+                const sign = rawVal >= 0 ? '+' : '';
+                
+                // Color mapping: Negative SHAP decreases risk (green), positive increases risk (red)
+                const isPositive = rawVal >= 0;
+                const accentColorText = isPositive ? 'text-rose-400' : 'text-emerald-400';
+                const progressBg = isPositive ? 'bg-rose-500/80 shadow-[0_0_10px_rgba(244,63,94,0.4)]' : 'bg-emerald-500/80 shadow-[0_0_10px_rgba(16,185,129,0.4)]';
+                
+                // Calculate relative percentage width based on scaling (minimum 8% for visual visibility)
+                const percentWidth = Math.max(Math.round((Math.abs(rawVal) / maxVal) * 100), 8);
+                
+                const itemHtml = `
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-medium text-slate-300">${label}</span>
+                            <span class="font-mono font-bold ${accentColorText}">${sign}${rawVal.toFixed(4)}</span>
+                        </div>
+                        <div class="h-2 w-full bg-slate-800/80 rounded-full overflow-hidden border border-slate-700/30 flex items-center">
+                            <div class="h-full rounded-full transition-all duration-1000 ${progressBg}" style="width: ${percentWidth}%"></div>
+                        </div>
+                    </div>
+                `;
+                shapBarsContainer.insertAdjacentHTML('beforeend', itemHtml);
+            });
+        }
+    </script>
+</body>
+</html>

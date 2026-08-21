@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+ENV/
+
+# IDE configs
+.vscode/
+.idea/
+.DS_Store
+
+# Temporary files
+output.txt
+output_lgbm.txt
+output_shap.txt
+inspect_models.py
+inspect_lgbm.py
+check_shap_type.py
+check_predict_proba.py
