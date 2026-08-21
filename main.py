@@ -124,7 +124,7 @@ executor = ThreadPoolExecutor(max_workers=8)
 # 4. REQUEST & RESPONSE SCHEMAS
 # ==========================================
 class ScoreRequest(BaseModel):
-    income: float = Field(..., description="Monthly income of applicant in USD", ge=0)
+    income: float = Field(..., description="Monthly income of applicant in NGN", ge=0)
     nsf_count: int = Field(..., description="Number of Non-Sufficient Funds events in past 90 days", ge=0)
     dsr: float = Field(..., description="Debt Service Ratio (total monthly debt payments / total monthly income)", ge=0)
     balance_volatility: float = Field(..., description="Standard deviation of daily balances", ge=0)
@@ -140,7 +140,7 @@ class ScoreResponse(BaseModel):
     probability: float = Field(..., description="Calculated probability of default")
     risk_tier: str = Field(..., description="Categorized risk tier (Low, Medium, High)")
     risk_band: str = Field(..., description="Risk tier band label, mapping to risk_tier")
-    max_loan_affordable: int = Field(..., description="Maximum affordable loan limit in USD")
+    max_loan_affordable: int = Field(..., description="Maximum affordable loan limit in NGN")
     top_features: List[SHAPContribution] = Field(..., description="Top 3 SHAP feature attributions")
     fallback: bool = Field(..., description="Flag indicating if the system used a hardcoded fallback decision")
     reason_code: Optional[str] = Field(None, description="Detailed system code explaining decision route")

@@ -13,7 +13,7 @@ graph TD
     Logic -->|3. Fallback Enforcer| FailCase[2s Timeout / Hard Failure]
     
     Logic -->|Success| Response[Risk Tier, Probability & SHAP explanation]
-    FailCase -->|Triggered| DefaultResp[Medium-Manual-Review & $10k default limit]
+    FailCase -->|Triggered| DefaultResp[Medium-Manual-Review & ₦10k default limit]
     
     Response -->|Stdout| Logger[JSON Structured Audit Logs]
     DefaultResp -->|Stdout| Logger
@@ -25,7 +25,7 @@ graph TD
 - **Resilient Fallback**: Inference is wrapped in a hard 2.0-second timeout. If execution fails or times out, the system automatically falls back to:
   - `probability`: `0.5`
   - `risk_tier` / `risk_band`: `"Medium-Manual-Review"`
-  - `max_loan_affordable`: `$10,000`
+  - `max_loan_affordable`: `₦10,000`
   - `reason_code`: `"ERR_SYSTEM_FALLBACK"`
 - **Structured Audit Logs**: Every decision prints a single-line JSON structured log to `stdout` containing the raw request inputs, computed outputs, model version, and exact timestamps for ingestion into logging aggregators (e.g. ELK, Datadog) for model monitoring and retraining loops.
 
