@@ -157,12 +157,12 @@
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label for="income" class="text-sm font-medium text-slate-300">Monthly Income</label>
-                                <span id="income-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">₦5,000</span>
+                                <span id="income-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">₦100,000</span>
                             </div>
-                            <input type="range" id="income" min="1000" max="25000" step="100" value="5000" class="w-full" oninput="updateDisplay(this, '₦', '')">
+                            <input type="range" id="income" min="10000" max="1000000" step="5000" value="100000" class="w-full" oninput="updateDisplay(this, '₦', '')">
                             <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
-                                <span>₦1,000</span>
-                                <span>₦25,000</span>
+                                <span>₦10,000</span>
+                                <span>₦1,000,000</span>
                             </div>
                         </div>
 
@@ -196,12 +196,12 @@
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label for="balance_volatility" class="text-sm font-medium text-slate-300">Daily Balance Volatility</label>
-                                <span id="balance_volatility-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">₦500</span>
+                                <span id="balance_volatility-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">₦0.20</span>
                             </div>
-                            <input type="range" id="balance_volatility" min="0" max="10000" step="50" value="500" class="w-full" oninput="updateDisplay(this, '₦', '')">
+                            <input type="range" id="balance_volatility" min="0.0" max="2.0" step="0.01" value="0.20" class="w-full" oninput="updateDisplay(this, '₦', '')">
                             <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
-                                <span>₦0</span>
-                                <span>₦10,000</span>
+                                <span>₦0.00</span>
+                                <span>₦2.00</span>
                             </div>
                         </div>
 
@@ -211,7 +211,7 @@
                                 <label for="loan_inflow_ratio" class="text-sm font-medium text-slate-300">Loan Inflow Ratio</label>
                                 <span id="loan_inflow_ratio-val" class="text-sm font-semibold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-900/50">0.20</span>
                             </div>
-                            <input type="range" id="loan_inflow_ratio" min="0.0" max="5.0" step="0.1" value="0.2" class="w-full" oninput="updateDisplay(this, '', 'x')">
+                            <input type="range" id="loan_inflow_ratio" min="0.0" max="5.0" step="0.01" value="0.2" class="w-full" oninput="updateDisplay(this, '', 'x')">
                             <div class="flex justify-between text-[10px] text-slate-500 mt-0.5">
                                 <span>0.0</span>
                                 <span>5.0</span>
@@ -369,30 +369,30 @@
         // Preset configurations mapping
         const PRESETS = {
             'low-risk': {
-                income: 16000,
+                income: 450000.0,
                 nsf_count: 0,
-                dsr: 0.12,
-                balance_volatility: 250,
-                loan_inflow_ratio: 0.1,
+                dsr: 0.15,
+                balance_volatility: 0.05,
+                loan_inflow_ratio: 0.0,
                 gambling_spend_index: 0.0,
-                narration_risk_score: 0.05
+                narration_risk_score: 0.02
             },
             'borderline': {
-                income: 5800,
+                income: 120000.0,
                 nsf_count: 1,
-                dsr: 0.38,
-                balance_volatility: 1400,
-                loan_inflow_ratio: 0.7,
-                gambling_spend_index: 0.15,
-                narration_risk_score: 0.32
+                dsr: 0.35,
+                balance_volatility: 0.25,
+                loan_inflow_ratio: 0.15,
+                gambling_spend_index: 0.1,
+                narration_risk_score: 0.45
             },
             'high-risk': {
-                income: 2900,
-                nsf_count: 6,
-                dsr: 0.72,
-                balance_volatility: 5200,
-                loan_inflow_ratio: 2.8,
-                gambling_spend_index: 0.68,
+                income: 45000.0,
+                nsf_count: 5,
+                dsr: 0.55,
+                balance_volatility: 0.35,
+                loan_inflow_ratio: 0.4,
+                gambling_spend_index: 0.6,
                 narration_risk_score: 0.85
             }
         };
